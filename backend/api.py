@@ -12,10 +12,12 @@ CORS(app)
 
 def obtener_conexion():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+        user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
-        database="tienda"
+        database=os.getenv("DB_NAME"),
+        ssl_disabled=False
     )
     
 @app.route("/clientes")
