@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import mysql.connector
-from flask import request
 import os
 from dotenv import load_dotenv
 
@@ -56,6 +55,39 @@ def crear_cliente():
     conexion.close()
 
     return jsonify({"id": nuevo_id, "nombre": nombre, "correo": correo}), 201
+
+@app.route("/clientes/<int:id_cliente>", methods=["DELETE"])
+def eliminar_cliente(id_cliente):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("DELETE FROM clientes WHERE id = %s", (id_cliente,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+    
+    return jsonify({"mensaje": "Cliente eliminado"}), 200
+
+@app.route("/productos/<int:id_producto>", methods=["DELETE"])
+def eliminar_producto(id_producto):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("DELETE FROM productos WHERE id = %s", (id_producto,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+    
+    return jsonify({"mensaje": "Producto eliminado"}), 200
+
+@app.route("/pedidos/<int:id_pedido>", methods=["DELETE"])
+def eliminar_pedido(id_pedido):
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("DELETE FROM pedidos WHERE id = %s", (id_pedido,))
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+    
+    return jsonify({"mensaje": "Pedido eliminado"}), 200
 
 @app.route("/productos")
 def obtener_productos():

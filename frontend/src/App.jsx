@@ -40,6 +40,10 @@ function App() {
   }, [])
 
   function agregarCliente() {
+    if (nombre.trim() === '' || correo.trim() === '') {
+      alert('Por favor completa nombre y correo')
+      return
+    }
     fetch('http://127.0.0.1:5000/clientes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -53,7 +57,47 @@ function App() {
       })
   }
 
+  function eliminarCliente(id) {
+    if (!confirm('¿Seguro que quieres eliminar este cliente?')) {
+      return
+    }
+    fetch(`http://127.0.0.1:5000/clientes/${id}`, {
+      method: 'DELETE'
+    })
+      .then(() => {
+        cargarClientes()
+      })
+  }
+
+  function eliminarPedido(id) {
+    if (!confirm('¿Seguro que quieres eliminar este pedido?')) {
+      return
+    }
+    fetch(`http://127.0.0.1:5000/pedidos/${id}`, {
+      method: 'DELETE'
+    })
+      .then(() => {
+        cargarPedidos()
+      })
+  }
+
+  function eliminarProducto(id) {
+    if (!confirm('¿Seguro que quieres eliminar este producto?')) {
+      return
+    }
+    fetch(`http://127.0.0.1:5000/productos/${id}`, {
+      method: 'DELETE'
+    })
+      .then(() => {
+        cargarProductos()
+      })
+  }
+
   function agregarProducto() {
+    if (nombreProducto.trim() === '' || precioProducto === '') {
+      alert('Por favor completa nombre y precio')
+      return
+    }
     fetch('http://127.0.0.1:5000/productos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -68,6 +112,10 @@ function App() {
   }
 
   function agregarPedido() {
+    if (idClientePedido === '' || fechaPedido === '') {
+      alert('Por favor selecciona un cliente y una fecha')
+      return
+    }
     fetch('http://127.0.0.1:5000/pedidos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -109,6 +157,7 @@ function App() {
         {clientes.map((cliente) => (
           <li key={cliente.id}>
             {cliente.nombre} - {cliente.correo}
+            <button onClick={() => eliminarCliente(cliente.id)}>Eliminar</button>
           </li>
         ))}
       </ul>
@@ -133,6 +182,7 @@ function App() {
         {productos.map((producto) => (
           <li key={producto.id}>
             {producto.nombre} - ${producto.precio}
+            <button onClick={() => eliminarProducto(producto.id)}>Eliminar</button>
           </li>
         ))}
       </ul>
@@ -164,6 +214,7 @@ function App() {
         <button onClick={() => enviarPorWhatsapp(pedido)}>
           Enviar por WhatsApp
         </button>
+        <button onClick={() => eliminarPedido(pedido.id)}>Eliminar</button>
       </li>
     ))}
 </ul>
