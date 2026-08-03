@@ -22,8 +22,12 @@ function App() {
   const [usuario, setUsuario] = useState('')
   const [contraseña, setContraseña] = useState('')
   const [mostrarContraseña, setMostrarContraseña] = useState(false)
+  const [errorLogin, setErrorLogin] = useState('')
+  const [cargandoLogin, setCargandoLogin] = useState(false)
 
   function iniciarSesion() {
+    setErrorLogin('')
+    setCargandoLogin(true)
     fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -31,12 +35,19 @@ function App() {
     })
       .then(response => response.json())
       .then(data => {
+        setCargandoLogin(false)
         if (data.exito) {
           setAutenticado(true)
         } else {
-          alert('Usuario o contraseña incorrectos')
+          setErrorLogin('Usuario o contraseña incorrectos')
         }
       })
+  }
+
+  function cerrarSesion() {
+    setAutenticado(false)
+    setUsuario('')
+    setContraseña('')
   }
 
   function cargarClientes() {
@@ -188,32 +199,45 @@ function App() {
 
   if (!autenticado) {
     return (
-      <div>
-        <h1>Iniciar sesión</h1>
-        <input
-          type="text"
-          placeholder="Usuario"
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') iniciarSesion() }}
-        />
-        <input
-          type={mostrarContraseña ? "text" : "password"}
-          placeholder="Contraseña"
-          value={contraseña}
-          onChange={(e) => setContraseña(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') iniciarSesion() }}
-        />
-        <button type="button" onClick={() => setMostrarContraseña(!mostrarContraseña)}>
-          {mostrarContraseña ? "Ocultar" : "Mostrar"}
-        </button>
-        <button onClick={iniciarSesion}>Ingresar</button>
+      <div className="pantalla-login">
+        <div className="tarjeta-login">
+          <h1>🛒 Mi Tienda</h1>
+          <p className="subtitulo-login">Inicia sesión para continuar</p>
+          <input
+            type="text"
+            placeholder="Usuario"
+            value={usuario}
+            onChange={(e) => setUsuario(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') iniciarSesion() }}
+          />
+          <div className="campo-contraseña">
+            <input
+              type={mostrarContraseña ? "text" : "password"}
+              placeholder="Contraseña"
+              value={contraseña}
+              onChange={(e) => setContraseña(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') iniciarSesion() }}
+            />
+            <button type="button" className="boton-mostrar" onClick={() => setMostrarContraseña(!mostrarContraseña)}>
+              {mostrarContraseña ? "Ocultar" : "Mostrar"}
+            </button>
+          </div>
+          {errorLogin && <p className="error-login">{errorLogin}</p>}
+          <button onClick={iniciarSesion} disabled={cargandoLogin} className="boton-ingresar">
+            {cargandoLogin ? 'Verificando...' : 'Ingresar'}
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
     <div>
+      <div className="encabezado">
+        <h1 className="titulo-tienda">🛒 Mi Tienda</h1>
+        <button onClick={cerrarSesion}>Cerrar sesión</button>
+      </div>
+
       <h1>Lista de clientes</h1>
 
       <input

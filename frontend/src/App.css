@@ -87,3 +87,67 @@ li button:last-child:hover {
         width: auto;
     }
 }
+
+.titulo-tienda {
+    text-align: center;
+    font-size: 32px;
+    border-bottom: none;
+    color: #7dd3fc;
+    margin-bottom: 20px;
+}
+
+.encabezado {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.pantalla-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.targeta-login {
+    background-color: #2a2a40;
+    padding: 40px;
+    border-radius: 12px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.targeta-login input {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 12px;
+}
+
+.subtitulo-login {
+    color: #a0a0b0;
+    margin-bottom: 20px;
+}
+
+.campo-contraseña {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.campo-contraseña input {
+    margin-bottom: 0;
+}
+
+.boton-mostrar {
+    white-space: nowrap;
+}
+
+.error-login {
+    color: #f87171;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.boton-ingresar {
+    width: 100%;
+}
