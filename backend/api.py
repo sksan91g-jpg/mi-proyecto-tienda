@@ -3,6 +3,7 @@ from flask_cors import CORS
 import mysql.connector
 import os
 from dotenv import load_dotenv
+from werkzeug.security import check_password_hash
 
 load_dotenv()
 
@@ -18,6 +19,24 @@ def obtener_conexion():
         database=os.getenv("DB_NAME"),
         ssl_disabled=False
     )
+    
+@app.route("/login", methods=["POST"])
+def login():
+    datos = request.get_json()
+    usuario = datos.get("usuario")
+    contraseña = datos.get("contraseña")
+    
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute("SELECT contraseña_hash FROM usuarios WHERE usuario = %s", (usuario,))
+    resultado = cursor.fetchone()
+    cursor.close()
+    conexion.close()
+    
+    if resultado and check_password_hash(resultado[0], contraseña):
+        return jsonify({"exito": True}), 200
+    else:
+        return jsonify({"exito": False}), 401    
     
 @app.route("/clientes")
 def obtener_clientes():
@@ -66,6 +85,24 @@ def eliminar_cliente(id_cliente):
     conexion.close()
     
     return jsonify({"mensaje": "Cliente eliminado"}), 200
+
+@app.route("/clientes/<int:id_cliente>", methods=["PUT"])
+def actualizar_cliente(id_cliente):
+    datos = request.get_json()
+    nombre = datos.get("nombre")
+    correo = datos.get("correo")
+    
+    conexion = obtener_conexion()
+    cursor = conexion.cursor()
+    cursor.execute(
+        "UPDATE clientes SET nombre = %s, correo = %s WHERE id = %s",
+        (nombre, correo, id_cliente)
+    )
+    conexion.commit()
+    cursor.close()
+    conexion.close()
+    
+    return jsonify({"id": id_cliente, "nombre": nombre, "correo": correo}), 200
 
 @app.route("/productos/<int:id_producto>", methods=["DELETE"])
 def eliminar_producto(id_producto):
@@ -168,7 +205,8 @@ def crear_pedido():
     return jsonify({"id": nuevo_id, "fecha": fecha, "id_cliente": id_cliente}), 201
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, host='0.0.0.0')
+    
     
     
     

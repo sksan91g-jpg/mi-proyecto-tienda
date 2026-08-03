@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 
+const API_URL = 'http://10.130.106.27:5000'
+
 function App() {
   const [clientes, setClientes] = useState([])
   const [productos, setProductos] = useState([])
@@ -8,6 +10,7 @@ function App() {
 
   const [nombre, setNombre] = useState('')
   const [correo, setCorreo] = useState('')
+  const [idClienteEditando, setIdClienteEditando] = useState(null)
 
   const [nombreProducto, setNombreProducto] = useState('')
   const [precioProducto, setPrecioProducto] = useState('')
@@ -15,36 +18,59 @@ function App() {
   const [idClientePedido, setIdClientePedido] = useState('')
   const [fechaPedido, setFechaPedido] = useState('')
 
+  const [autenticado, setAutenticado] = useState(false)
+  const [usuario, setUsuario] = useState('')
+  const [contraseña, setContraseña] = useState('')
+  const [mostrarContraseña, setMostrarContraseña] = useState(false)
+
+  function iniciarSesion() {
+    fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario, contraseña })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.exito) {
+          setAutenticado(true)
+        } else {
+          alert('Usuario o contraseña incorrectos')
+        }
+      })
+  }
+
   function cargarClientes() {
-    fetch('http://127.0.0.1:5000/clientes')
+    fetch(`${API_URL}/clientes`)
       .then(response => response.json())
       .then(data => setClientes(data))
   }
 
   function cargarProductos() {
-    fetch('http://127.0.0.1:5000/productos')
+    fetch(`${API_URL}/productos`)
       .then(response => response.json())
       .then(data => setProductos(data))
   }
 
   function cargarPedidos() {
-    fetch('http://127.0.0.1:5000/pedidos')
+    fetch(`${API_URL}/pedidos`)
       .then(response => response.json())
       .then(data => setPedidos(data))
   }
 
   useEffect(() => {
-    cargarClientes()
-    cargarProductos()
-    cargarPedidos()
-  }, [])
+    if (autenticado) {
+      cargarClientes()
+      cargarProductos()
+      cargarPedidos()
+    }
+  }, [autenticado])
 
   function agregarCliente() {
     if (nombre.trim() === '' || correo.trim() === '') {
       alert('Por favor completa nombre y correo')
       return
     }
-    fetch('http://127.0.0.1:5000/clientes', {
+    fetch(`${API_URL}/clientes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre, correo })
@@ -61,7 +87,7 @@ function App() {
     if (!confirm('¿Seguro que quieres eliminar este cliente?')) {
       return
     }
-    fetch(`http://127.0.0.1:5000/clientes/${id}`, {
+    fetch(`${API_URL}/clientes/${id}`, {
       method: 'DELETE'
     })
       .then(() => {
@@ -69,27 +95,28 @@ function App() {
       })
   }
 
-  function eliminarPedido(id) {
-    if (!confirm('¿Seguro que quieres eliminar este pedido?')) {
-      return
-    }
-    fetch(`http://127.0.0.1:5000/pedidos/${id}`, {
-      method: 'DELETE'
-    })
-      .then(() => {
-        cargarPedidos()
-      })
+  function comenzarEdicionCliente(cliente) {
+    setIdClienteEditando(cliente.id)
+    setNombre(cliente.nombre)
+    setCorreo(cliente.correo)
   }
 
-  function eliminarProducto(id) {
-    if (!confirm('¿Seguro que quieres eliminar este producto?')) {
+  function guardarEdicionCliente() {
+    if (nombre.trim() === '' || correo.trim() === '') {
+      alert('Por favor completa nombre y correo')
       return
     }
-    fetch(`http://127.0.0.1:5000/productos/${id}`, {
-      method: 'DELETE'
+    fetch(`${API_URL}/clientes/${idClienteEditando}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, correo })
     })
+      .then(response => response.json())
       .then(() => {
-        cargarProductos()
+        setNombre('')
+        setCorreo('')
+        setIdClienteEditando(null)
+        cargarClientes()
       })
   }
 
@@ -98,7 +125,7 @@ function App() {
       alert('Por favor completa nombre y precio')
       return
     }
-    fetch('http://127.0.0.1:5000/productos', {
+    fetch(`${API_URL}/productos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre: nombreProducto, precio: precioProducto })
@@ -111,12 +138,24 @@ function App() {
       })
   }
 
+  function eliminarProducto(id) {
+    if (!confirm('¿Seguro que quieres eliminar este producto?')) {
+      return
+    }
+    fetch(`${API_URL}/productos/${id}`, {
+      method: 'DELETE'
+    })
+      .then(() => {
+        cargarProductos()
+      })
+  }
+
   function agregarPedido() {
     if (idClientePedido === '' || fechaPedido === '') {
       alert('Por favor selecciona un cliente y una fecha')
       return
     }
-    fetch('http://127.0.0.1:5000/pedidos', {
+    fetch(`${API_URL}/pedidos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id_cliente: idClientePedido, fecha: fechaPedido })
@@ -129,11 +168,49 @@ function App() {
       })
   }
 
+  function eliminarPedido(id) {
+    if (!confirm('¿Seguro que quieres eliminar este pedido?')) {
+      return
+    }
+    fetch(`${API_URL}/pedidos/${id}`, {
+      method: 'DELETE'
+    })
+      .then(() => {
+        cargarPedidos()
+      })
+  }
+
   function enviarPorWhatsapp(pedido) {
     const mensaje = `Pedido #${pedido.id}\nCliente: ${pedido.cliente}\nFecha: ${pedido.fecha}`
     const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`
     window.open(url, '_blank')
-}
+  }
+
+  if (!autenticado) {
+    return (
+      <div>
+        <h1>Iniciar sesión</h1>
+        <input
+          type="text"
+          placeholder="Usuario"
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') iniciarSesion() }}
+        />
+        <input
+          type={mostrarContraseña ? "text" : "password"}
+          placeholder="Contraseña"
+          value={contraseña}
+          onChange={(e) => setContraseña(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') iniciarSesion() }}
+        />
+        <button type="button" onClick={() => setMostrarContraseña(!mostrarContraseña)}>
+          {mostrarContraseña ? "Ocultar" : "Mostrar"}
+        </button>
+        <button onClick={iniciarSesion}>Ingresar</button>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -151,12 +228,17 @@ function App() {
         value={correo}
         onChange={(e) => setCorreo(e.target.value)}
       />
-      <button onClick={agregarCliente}>Agregar cliente</button>
+      {idClienteEditando ? (
+        <button onClick={guardarEdicionCliente}>Guardar cambios</button>
+      ) : (
+        <button onClick={agregarCliente}>Agregar cliente</button>
+      )}
 
       <ul>
         {clientes.map((cliente) => (
           <li key={cliente.id}>
             {cliente.nombre} - {cliente.correo}
+            <button onClick={() => comenzarEdicionCliente(cliente)}>Editar</button>
             <button onClick={() => eliminarCliente(cliente.id)}>Eliminar</button>
           </li>
         ))}
@@ -208,16 +290,16 @@ function App() {
       <button onClick={agregarPedido}>Agregar pedido</button>
 
       <ul>
-    {pedidos.map((pedido) => (
-      <li key={pedido.id}>
-        Pedido #{pedido.id} - {pedido.cliente} - {pedido.fecha}
-        <button onClick={() => enviarPorWhatsapp(pedido)}>
-          Enviar por WhatsApp
-        </button>
-        <button onClick={() => eliminarPedido(pedido.id)}>Eliminar</button>
-      </li>
-    ))}
-</ul>
+        {pedidos.map((pedido) => (
+          <li key={pedido.id}>
+            Pedido #{pedido.id} - {pedido.cliente} - {pedido.fecha}
+            <button onClick={() => enviarPorWhatsapp(pedido)}>
+              Enviar por WhatsApp
+            </button>
+            <button onClick={() => eliminarPedido(pedido.id)}>Eliminar</button>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
