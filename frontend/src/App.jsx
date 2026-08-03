@@ -14,9 +14,14 @@ function App() {
 
   const [nombreProducto, setNombreProducto] = useState('')
   const [precioProducto, setPrecioProducto] = useState('')
+  const [idProductoEditando, setIdProductoEditando] = useState(null)
 
   const [idClientePedido, setIdClientePedido] = useState('')
   const [fechaPedido, setFechaPedido] = useState('')
+  const [idPedidoEditando, setIdPedidoEditando] = useState(null)
+
+  const [pedidoExpandido, setPedidoExpandido] = useState(null)
+  const [detallePedido, setDetallePedido] = useState([])
 
   const [autenticado, setAutenticado] = useState(false)
   const [usuario, setUsuario] = useState('')
@@ -161,6 +166,31 @@ function App() {
       })
   }
 
+  function comenzarEdicionProducto(producto) {
+    setIdProductoEditando(producto.id)
+    setNombreProducto(producto.nombre)
+    setPrecioProducto(producto.precio)
+  }
+
+  function guardarEdicionProducto() {
+    if (nombreProducto.trim() === '' || precioProducto === '') {
+      alert('Por favor completa nombre y precio')
+      return
+    }
+    fetch(`${API_URL}/productos/${idProductoEditando}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: nombreProducto, precio: precioProducto })
+    })
+      .then(response => response.json())
+      .then(() => {
+        setNombreProducto('')
+        setPrecioProducto('')
+        setIdProductoEditando(null)
+        cargarProductos()
+      })
+  }
+
   function agregarPedido() {
     if (idClientePedido === '' || fechaPedido === '') {
       alert('Por favor selecciona un cliente y una fecha')
@@ -188,6 +218,43 @@ function App() {
     })
       .then(() => {
         cargarPedidos()
+      })
+  }
+
+  function comenzarEdicionPedido(pedido) {
+    setIdPedidoEditando(pedido.id)
+    setFechaPedido(pedido.fecha)
+  }
+
+  function guardarEdicionPedido() {
+    if (idClientePedido === '' || fechaPedido === '') {
+      alert('Por favor selecciona un cliente y una fecha')
+      return
+    }
+    fetch(`${API_URL}/pedidos/${idPedidoEditando}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id_cliente: idClientePedido, fecha: fechaPedido })
+    })
+      .then(response => response.json())
+      .then(() => {
+        setIdClientePedido('')
+        setFechaPedido('')
+        setIdPedidoEditando(null)
+        cargarPedidos()
+      })
+  }
+
+  function verDetallePedido(idPedido) {
+    if (pedidoExpandido === idPedido) {
+      setPedidoExpandido(null)
+      return
+    }
+    fetch(`${API_URL}/pedidos/${idPedido}/detalle`)
+      .then(response => response.json())
+      .then(data => {
+        setDetallePedido(data)
+        setPedidoExpandido(idPedido)
       })
   }
 
@@ -282,12 +349,17 @@ function App() {
         value={precioProducto}
         onChange={(e) => setPrecioProducto(e.target.value)}
       />
-      <button onClick={agregarProducto}>Agregar producto</button>
+      {idProductoEditando ? (
+        <button onClick={guardarEdicionProducto}>Guardar cambios</button>
+      ) : (
+        <button onClick={agregarProducto}>Agregar producto</button>
+      )}
 
       <ul>
         {productos.map((producto) => (
           <li key={producto.id}>
             {producto.nombre} - ${producto.precio}
+            <button onClick={() => comenzarEdicionProducto(producto)}>Editar</button>
             <button onClick={() => eliminarProducto(producto.id)}>Eliminar</button>
           </li>
         ))}
@@ -311,16 +383,33 @@ function App() {
         value={fechaPedido}
         onChange={(e) => setFechaPedido(e.target.value)}
       />
-      <button onClick={agregarPedido}>Agregar pedido</button>
+      {idPedidoEditando ? (
+        <button onClick={guardarEdicionPedido}>Guardar cambios</button>
+      ) : (
+        <button onClick={agregarPedido}>Agregar pedido</button>
+      )}
 
       <ul>
         {pedidos.map((pedido) => (
-          <li key={pedido.id}>
-            Pedido #{pedido.id} - {pedido.cliente} - {pedido.fecha}
-            <button onClick={() => enviarPorWhatsapp(pedido)}>
-              Enviar por WhatsApp
-            </button>
-            <button onClick={() => eliminarPedido(pedido.id)}>Eliminar</button>
+          <li key={pedido.id} className="pedido-item">
+            <div className="pedido-fila">
+              Pedido #{pedido.id} - {pedido.cliente} - {pedido.fecha}
+              <button onClick={() => verDetallePedido(pedido.id)}>Ver detalle</button>
+              <button onClick={() => comenzarEdicionPedido(pedido)}>Editar</button>
+              <button onClick={() => enviarPorWhatsapp(pedido)}>
+                Enviar por WhatsApp
+              </button>
+              <button onClick={() => eliminarPedido(pedido.id)}>Eliminar</button>
+            </div>
+            {pedidoExpandido === pedido.id && (
+              <ul className="detalle-lista">
+                {detallePedido.map((item, index) => (
+                  <li key={index}>
+                    {item.producto} x{item.cantidad} - ${item.precio}
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>
